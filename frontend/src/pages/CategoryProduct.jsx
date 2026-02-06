@@ -1,9 +1,9 @@
-import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Loading from "../assets/Loading4.webm"
 import { ChevronLeft } from 'lucide-react'
 import ProductListView from '../components/ProductListView'
+import api from '../utils/api'
 
 const CategoryProduct = () => {
   const [searchData, setSearchData] = useState([])
@@ -13,8 +13,10 @@ const CategoryProduct = () => {
 
   const getFilterData = async ()=>{
     try {
-      const res = await axios.get(`https://fakestoreapi.in/api/products/category?type=${category}`)
-      const data = res.data.products
+      const res = await api.get('/api/products', {
+        params: { category }
+      })
+      const data = res.data.data || []
       setSearchData(data)
 
     } catch (error) {
@@ -26,7 +28,7 @@ const CategoryProduct = () => {
   useEffect(()=>{
     getFilterData()
     window.scrollTo(0,0)
-  },[])
+  },[category])
   
   return (
     <div>

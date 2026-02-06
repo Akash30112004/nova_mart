@@ -1,16 +1,19 @@
-import { MapPin } from 'lucide-react'
+import { MapPin, Plus } from 'lucide-react'
 import React, { useState } from 'react'
 import { CgClose } from 'react-icons/cg'
 import { FaCaretDown } from 'react-icons/fa'
 import { IoCartOutline } from 'react-icons/io5'
 import { Link, NavLink } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
 import { HiMenuAlt1, HiMenuAlt3 } from 'react-icons/hi'
+import Button from './common/Button'
 import ResponsiveMenu from './ResponsiveMenu'
 
 const Navbar = ({location, getLocation, openDropdown, setOpenDropdown}) => {
 
     const {cartItem} = useCart()
+    const { isAuthenticated, user } = useAuth()
     const [openNav, setOpenNav] = useState(false)
     
     const toggleDropdown = ()=>{
@@ -45,6 +48,14 @@ const Navbar = ({location, getLocation, openDropdown, setOpenDropdown}) => {
                         <NavLink to={"/about"} className={({ isActive }) => `${isActive ? "border-b-2 transition-all border-blue-500" : "text-black"} cursor-pointer`}><li>About</li></NavLink>
                         <NavLink to={"/contact"} className={({ isActive }) => `${isActive ? "border-b-2 transition-all border-blue-500" : "text-black"} cursor-pointer`}><li>Contact</li></NavLink>
                     </ul>
+                    {isAuthenticated && user?.isAdmin && (
+                        <Link to={'/admin/add-product'} className='hidden md:block'>
+                            <Button variant='primary' size='sm' className='flex items-center gap-2'>
+                                <Plus size={18} />
+                                Add Product
+                            </Button>
+                        </Link>
+                    )}
                     <Link to={'/cart'} className='relative'>
                         <IoCartOutline className='h-7 w-7' />
                         <span className='bg-blue-500 px-2 rounded-full absolute -top-3 -right-3 text-white'>{cartItem.length}</span>

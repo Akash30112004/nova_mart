@@ -1,11 +1,10 @@
-import React, { useEffect } from 'react'
-import { getData } from '../context/DataContext'
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useProducts } from '../context/ProductContext'
 
 const Category = () => {
-    // const {categoryOnlyData} = getData()
     const navigate = useNavigate()
-    const {data} = getData()
+    const { products } = useProducts()
 
     const getUniqueCategory = (data, property) =>{
       let newVal = data?.map((curElem) =>{
@@ -17,7 +16,7 @@ const Category = () => {
 
 
   
-    const categoryOnlyData = getUniqueCategory(data, "category")
+    const categoryOnlyData = getUniqueCategory(products, "category")
   
   return (
     <div className='bg-[#101829]'>

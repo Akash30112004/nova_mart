@@ -1,125 +1,302 @@
-import React from 'react'
-import { useCart } from '../context/CartContext'
-import { FaRegTrashAlt } from 'react-icons/fa';
-import { LuNotebookText } from 'react-icons/lu';
-import { MdDeliveryDining } from 'react-icons/md';
-import { GiShoppingBag } from 'react-icons/gi';
-// Removed Clerk import
-// import { useUser } from '@clerk/clerk-react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import emptyCart from "../assets/empty-cart.png"
+import Container from '../components/common/Container';
+import Button from '../components/common/Button';
+import { useCart } from '../context/CartContext';
+import { Trash2, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { motion } from 'motion/react';
 
-const Cart = ({location, getLocation}) => {
-  const { cartItem , updateQuantity, deleteItem} = useCart()
-  // Removed Clerk usage
-  // const {user} = useUser()
-  const navigate = useNavigate()
-  
-  const totalPrice = cartItem.reduce((total, item) => total + item.price, 0)
+const Cart = () => {
+  const { cartItem, updateCartItem, deleteItem } = useCart();
+  const navigate = useNavigate();
+  const [promoCode, setPromoCode] = useState('');
+
+  // Calculate totals
+  const subtotal = cartItem.reduce(
+    (total, item) => total + item.price * (item.quantity || 1),
+    0
+  );
+  const shippingCost = subtotal > 50 ? 0 : 10;
+  const tax = subtotal * 0.1;
+  const total = subtotal + shippingCost + tax;
+
+  const handleQuantityChange = (item, newQuantity) => {
+    if (newQuantity < 0) return;
+    updateCartItem(item.id, newQuantity);
+  };
+
+  if (cartItem.length === 0) {
+    return (
+      <div className='bg-white min-h-screen'>
+        <Container className='py-16'>
+          <motion.div 
+            className='flex flex-col items-center justify-center text-center space-y-6'
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6 }}
+          >
+            <motion.div
+              animate={{ 
+                y: [0, -10, 0],
+                rotate: [0, 5, -5, 0]
+              }}
+              transition={{ 
+                duration: 3,
+                repeat: Infinity,
+                ease: 'easeInOut'
+              }}
+            >
+              <ShoppingBag size={80} className='text-gray-300' />
+            </motion.div>
+            <motion.h1 
+              className='text-4xl font-bold text-gray-900'
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              Your Cart is Empty
+            </motion.h1>
+            <motion.p 
+              className='text-gray-600 text-lg max-w-md'
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              Looks like you haven't added any products yet. Start shopping to fill your cart!
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+            >
+              <Button
+                onClick={() => navigate('/products')}
+                variant='primary'
+                size='lg'
+                className='flex items-center gap-2'
+              >
+                <ArrowLeft size={20} />
+                Continue Shopping
+              </Button>
+            </motion.div>
+          </motion.div>
+        </Container>
+      </div>
+    );
+  }
+
   return (
-    <div className='mt-10 max-w-6xl mx-auto mb-5 px-4 md:px-0'>
-      {
-        cartItem.length > 0 ? <div>
-          <h1 className='font-bold text-2xl '>My Cart ({cartItem.length})</h1>
-          <div>
-            <div className='mt-10'>
-              {cartItem.map((item, index) => {
-                return <div key={index} className='bg-gray-100 p-5 rounded-md flex items-center justify-between mt-3 w-full'>
-                  <div className='flex items-center gap-4'>
-                    <img src={item.image} alt={item.title} className='w-20 h-20 rounded-md' />
-                    <div>
-                      <h1 className='md:w-[300px] line-clamp-2 '>{item.title}</h1>
-                      <p className='text-blue-500 font-semibold text-lg'>${item.price}</p>
+    <div className='bg-white min-h-screen'>
+      {/* Header */}
+      <motion.div 
+        className='bg-gradient-to-r from-blue-600 to-blue-800 text-white py-8'
+        initial={{ opacity: 0, y: -50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <Container>
+          <motion.h1 
+            className='text-4xl font-bold'
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            Shopping Cart
+          </motion.h1>
+          <motion.p 
+            className='text-blue-100 mt-2'
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            You have {cartItem.length} item{cartItem.length !== 1 ? 's' : ''} in your cart
+          </motion.p>
+        </Container>
+      </motion.div>
+
+      <Container className='py-12'>
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
+          {/* Cart Items */}
+          <motion.div 
+            className='lg:col-span-2 space-y-4'
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: {},
+              visible: {
+                transition: {
+                  staggerChildren: 0.1
+                }
+              }
+            }}
+          >
+            {cartItem.map((item, index) => (
+              <motion.div
+                key={index}
+                className='border border-gray-200 rounded-lg p-4 md:p-6 bg-white hover:shadow-md transition-shadow'
+                variants={{
+                  hidden: { opacity: 0, x: -30 },
+                  visible: { opacity: 1, x: 0 }
+                }}
+                whileHover={{ scale: 1.02 }}
+                exit={{ opacity: 0, x: -50 }}
+              >
+                <div className='flex gap-4'>
+                  {/* Product Image */}
+                  <div className='flex-shrink-0 w-24 h-24 bg-gray-100 rounded-lg overflow-hidden'>
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className='w-full h-full object-cover'
+                    />
+                  </div>
+
+                  {/* Product Details */}
+                  <div className='flex-grow'>
+                    <h3
+                      className='font-semibold text-lg text-gray-900 cursor-pointer hover:text-blue-600'
+                      onClick={() => navigate(`/product/${item.id}`)}
+                    >
+                      {item.name}
+                    </h3>
+                    <p className='text-gray-600 text-sm'>{item.category}</p>
+                    <p className='text-blue-600 font-bold text-lg mt-2'>
+                      ${item.price.toFixed(2)}
+                    </p>
+                  </div>
+
+                  {/* Quantity Controls */}
+                  <div className='flex items-center gap-3'>
+                    <div className='flex items-center border border-gray-300 rounded-lg'>
+                      <button
+                        onClick={() =>
+                          handleQuantityChange(item, (item.quantity || 1) - 1)
+                        }
+                        className='px-3 py-1 text-gray-600 hover:text-gray-900 font-semibold'
+                      >
+                        −
+                      </button>
+                      <span className='px-4 py-1 border-l border-r border-gray-300 font-semibold'>
+                        {item.quantity || 1}
+                      </span>
+                      <button
+                        onClick={() =>
+                          handleQuantityChange(item, (item.quantity || 1) + 1)
+                        }
+                        className='px-3 py-1 text-gray-600 hover:text-gray-900 font-semibold'
+                      >
+                        +
+                      </button>
                     </div>
+
+                    {/* Delete Button */}
+                    <motion.button
+                      onClick={() => deleteItem(item.id)}
+                      className='p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors'
+                      aria-label='Delete item'
+                      whileHover={{ scale: 1.1, rotate: 10 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <Trash2 size={20} />
+                    </motion.button>
                   </div>
-                  <div className='bg-blue-500 text-white flex gap-4 p-2 rounded-md font-bold text-xl'>
-                    <button onClick={()=>updateQuantity(cartItem, item.id, "decrease")} className='cursor-pointer'>-</button>
-                    <span>{item.quantity}</span>
-                    <button onClick={()=>updateQuantity(cartItem, item.id, "increase")} className='cursor-pointer'>+</button>
-                  </div>
-                  <span onClick={()=>deleteItem(item.id)} className='hover:bg-white/60 transition-all rounded-full p-3 hover:shadow-2xl'>
-                    <FaRegTrashAlt className='text-blue-500 text-2xl cursor-pointer' />
+                </div>
+
+                {/* Item Total */}
+                <div className='mt-4 pt-4 border-t border-gray-200 flex justify-between items-center'>
+                  <span className='text-gray-600'>Subtotal:</span>
+                  <span className='font-bold text-lg'>
+                    ${(item.price * (item.quantity || 1)).toFixed(2)}
                   </span>
                 </div>
-              })}
-            </div>
-            <div className='grid grid-cols-1 md:grid-cols-2 md:gap-20'>
-              <div className='bg-gray-100 rounded-md p-7 mt-4 space-y-2'>
-                <h1 className='text-gray-800 font-bold text-xl'>Delivery Info</h1>
-                <div className='flex flex-col space-y-1'>
-                  <label htmlFor="">Full Name</label>
-                  <input type="text" placeholder='Enter your name' className='p-2 rounded-md' value={""}/>
-                </div>
-                <div className='flex flex-col space-y-1'>
-                  <label htmlFor="">Address</label>
-                  <input type="text" placeholder='Enter your address' className='p-2 rounded-md' value={location?.county}/>
-                </div>
-                <div className='flex w-full gap-5'>
-                  <div className='flex flex-col space-y-1 w-full'>
-                    <label htmlFor="">State</label>
-                    <input type="text" placeholder='Enter your state' className='p-2 rounded-md w-full' value={location?.state}/>
-                  </div>
-                  <div className='flex flex-col space-y-1 w-full'>
-                    <label htmlFor="">PostCode</label>
-                    <input type="text" placeholder='Enter your postcode' className='p-2 rounded-md w-full' value={location?.postcode}/>
-                  </div>
-                </div>
-                <div className='flex w-full gap-5'>
-                  <div className='flex flex-col space-y-1 w-full'>
-                    <label htmlFor="">Country</label>
-                    <input type="text" placeholder='Enter your country' className='p-2 rounded-md w-full' value={location?.country}/>
-                  </div>
-                  <div className='flex flex-col space-y-1 w-full'>
-                    <label htmlFor="">Phone No</label>
-                    <input type="text" placeholder='Enter your Number' className='p-2 rounded-md w-full' />
-                  </div>
-                </div>
-                <button className='bg-blue-500 text-white px-3 py-1 rounded-md mt-3 cursor-pointer'>Submit</button>
-                <div className='flex items-center justify-center w-full text-gray-700'>
-                  ---------OR-----------
-                </div>
-                <div className='flex justify-center'>
-                  <button onClick={getLocation} className='bg-blue-500 text-white px-3 py-2 rounded-md'>Detect Location</button>
-                </div>
-              </div>
-              <div className='bg-white border border-gray-100 shadow-xl rounded-md p-7 mt-4 space-y-2 h-max'>
-                <h1 className='text-gray-800 font-bold text-xl'>Bill details</h1>
-                <div className='flex justify-between items-center'>
-                  <h1 className='flex gap-1 items-center text-gray-700'><span><LuNotebookText /></span>Items total</h1>
-                  <p>${totalPrice}</p>
-                </div>
-                <div className='flex justify-between items-center'>
-                  <h1 className='flex gap-1 items-center text-gray-700'><span><MdDeliveryDining /></span>Delivery Charge</h1>
-                  <p className='text-blue-500 font-semibold'><span className='text-gray-600 line-through'>$25</span> FREE</p>
-                </div>
-                <div className='flex justify-between items-center'>
-                  <h1 className='flex gap-1 items-center text-gray-700'><span><GiShoppingBag /></span>Handling Charge</h1>
-                  <p className='text-blue-500 font-semibold'>$5</p>
-                </div>
-                <hr  className='text-gray-200 mt-2'/>
-                <div className='flex justify-between items-center'>
-                  <h1 className='font-semibold text-lg'>Grand total</h1>
-                  <p className='font-semibold text-lg'>${totalPrice + 5}</p>
-                </div>
-                <div>
-                  <h1 className='font-semibold text-gray-700 mb-3 mt-7'>Apply Promo Code</h1>
-                  <div className='flex gap-3'>
-                    <input type="text" placeholder='Enter code' className='p-2 rounded-md w-full'/>
-                    <button className='bg-white text-black border border-gray-200 px-4 cursor-pointer py-1 rounded-md'>Apply</button>
-                  </div>
-                </div>
-                <button className='bg-blue-500 text-white px-3 py-2 rounded-md w-full cursor-pointer mt-3'>Proceed to Checkout</button>
-              </div>
-            </div>
-          </div>
-        </div> : <div className='flex flex-col gap-3 justify-center items-center h-[600px]'>
-          <h1 className='text-blue-500/80 font-bold text-5xl text-muted'>Oh no! Your cart is empty</h1>
-          <img src={emptyCart} alt="" className='w-[400px]'/>
-          <button onClick={()=>navigate('/products')} className='bg-blue-500 text-white px-3 py-2 rounded-md cursor-pointer '>Continue Shopping</button>
-        </div>
-      }
-    </div>
-  )
-}
+              </motion.div>
+            ))}
+          </motion.div>
 
-export default Cart
+          {/* Order Summary */}
+          <motion.div 
+            className='lg:col-span-1'
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            <div className='bg-gray-50 border border-gray-200 rounded-lg p-6 sticky top-4 space-y-4'>
+              <h2 className='text-2xl font-bold text-gray-900'>Order Summary</h2>
+
+              {/* Summary Details */}
+              <div className='space-y-3 border-b border-gray-200 pb-4'>
+                <div className='flex justify-between'>
+                  <span className='text-gray-600'>Subtotal</span>
+                  <span className='font-semibold'>${subtotal.toFixed(2)}</span>
+                </div>
+                <div className='flex justify-between'>
+                  <span className='text-gray-600'>Tax (10%)</span>
+                  <span className='font-semibold'>${tax.toFixed(2)}</span>
+                </div>
+                <div className='flex justify-between'>
+                  <span className='text-gray-600'>Shipping</span>
+                  <span className='font-semibold'>
+                    {shippingCost === 0 ? (
+                      <span className='text-green-600'>FREE</span>
+                    ) : (
+                      `$${shippingCost.toFixed(2)}`
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {/* Free Shipping Notice */}
+              {shippingCost > 0 && (
+                <p className='text-sm text-blue-600 bg-blue-50 p-3 rounded'>
+                  Add ${(50 - subtotal).toFixed(2)} more for free shipping!
+                </p>
+              )}
+
+              {/* Total */}
+              <div className='flex justify-between items-center text-lg font-bold'>
+                <span>Total:</span>
+                <span className='text-2xl text-blue-600'>${total.toFixed(2)}</span>
+              </div>
+
+              {/* Promo Code */}
+              <div className='space-y-2'>
+                <input
+                  type='text'
+                  placeholder='Enter promo code'
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value)}
+                  className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                />
+                <button className='w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition-colors'>
+                  Apply Code
+                </button>
+              </div>
+
+              {/* Checkout Button */}
+              <Button
+                onClick={() => navigate('/checkout')}
+                variant='primary'
+                size='lg'
+                className='w-full'
+              >
+                Proceed to Checkout
+              </Button>
+
+              {/* Continue Shopping */}
+              <Button
+                onClick={() => navigate('/products')}
+                variant='secondary'
+                size='lg'
+                className='w-full'
+              >
+                Continue Shopping
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </Container>
+    </div>
+  );
+};
+
+export default Cart;
